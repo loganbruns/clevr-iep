@@ -37,10 +37,10 @@ All code was developed and tested on Ubuntu 16.04 with Python 3.5.
 You can set up a virtual environment to run the code like this:
 
 ```bash
-virtualenv -p python3 .env       # Create virtual environment
+virtualenv -p python3.6 .env       # Create virtual environment
 source .env/bin/activate         # Activate virtual environment
 pip install -r requirements.txt  # Install dependencies
-echo $PWD > .env/lib/python3.5/site-packages/iep.pth # Add this package to virtual environment
+echo $PWD > .env/lib/python3.6/site-packages/iep.pth # Add this package to virtual environment
 # Work for a while ...
 deactivate # Exit virtual environment
 ```

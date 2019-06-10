@@ -54,6 +54,7 @@ class Seq2Seq(nn.Module):
     N = x.size(0) if x is not None else None
     N = y.size(0) if N is None and y is not None else N
     T_in = x.size(1) if x is not None else None
+    print(f'DEBUG: y={y}')
     T_out = y.size(1) if y is not None else None
     return V_in, V_out, D, H, L, N, T_in, T_out
 
@@ -157,9 +158,10 @@ class Seq2Seq(nn.Module):
     return y
 
   def reinforce_sample(self, x, max_length=30, temperature=1.0, argmax=False):
+    print(f'DEBUG: x={x}')
     N, T = x.size(0), max_length
     encoded = self.encoder(x)
-    y = torch.LongTensor(N, T).fill_(self.NULL)
+    y = torch.FloatTensor(N, T).fill_(self.NULL)
     done = torch.ByteTensor(N).fill_(0)
     cur_input = Variable(x.data.new(N, 1).fill_(self.START))
     h, c = None, None
@@ -169,21 +171,34 @@ class Seq2Seq(nn.Module):
       # logprobs is N x 1 x V
       logprobs, h, c = self.decoder(encoded, cur_input, h0=h, c0=c)
       logprobs = logprobs / temperature
-      probs = F.softmax(logprobs.view(N, -1)) # Now N x V
+      print(f'DEBUG: logprobs={logprobs}')
+      probs = F.softmax(logprobs.view(N, -1), dim=1) # Now N x V
+      print(f'DEBUG: probs={probs}')
+      print(f'DEBUG: argmax={argmax}')
       if argmax:
         _, cur_output = probs.max(1)
+        cur_output = cur_output.expand(1, 1)
       else:
         cur_output = probs.multinomial() # Now N x 1
       self.multinomial_outputs.append(cur_output)
       self.multinomial_probs.append(probs)
       cur_output_data = cur_output.data.cpu()
+      print(f'DEBUG: cur_output_data={cur_output_data}')
+      print(f'DEBUG: done={done}')
       not_done = logical_not(done)
+      print(f'DEBUG: output y={y}')
+      print(f'DEBUG: not_done={not_done}')
       y[:, t][not_done] = cur_output_data[not_done]
       done = logical_or(done, cur_output_data.cpu() == self.END)
+      print(f'DEBUG: done*={done}')
       cur_input = cur_output
       if done.sum() == N:
         break
-    return Variable(y.type_as(x.data))
+    print(f'DEBUG: output y*={Variable(y.type_as(x.data)) is Variable}')
+    # return Variable(y.type_as(x.data))
+    y.requires_grad_()
+    print(f'DEBUG: output y**={y}')
+    return y
 
   def reinforce_backward(self, reward, output_mask=None):
     """
@@ -213,7 +228,7 @@ def logical_and(x, y):
   return x * y
 
 def logical_or(x, y):
-  return (x + y).clamp_(0, 1)
+  return (x + y).clamp_(0, 1).squeeze_(1)
 
 def logical_not(x):
   return x == 0

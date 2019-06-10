@@ -3,3 +3,4 @@ data/
 .env/
 *.swp
 .ipynb_checkpoints/
+*~

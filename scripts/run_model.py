@@ -17,7 +17,8 @@ import torch.nn.functional as F
 import torchvision
 import numpy as np
 import h5py
-from scipy.misc import imread, imresize
+from imageio import imread
+from PIL import Image
 
 import iep.utils as utils
 import iep.programs
@@ -122,8 +123,8 @@ def run_single_example(args, model):
 
   # Load and preprocess the image
   img_size = (args.image_height, args.image_width)
-  img = imread(args.image, mode='RGB')
-  img = imresize(img, img_size, interp='bicubic')
+  img = imread(args.image, pilmode='RGB')
+  img = np.array(Image.fromarray(img).resize(img_size, resample=Image.BICUBIC))
   img = img.transpose(2, 0, 1)[None]
   mean = np.array([0.485, 0.456, 0.406]).reshape(1, 3, 1, 1)
   std = np.array([0.229, 0.224, 0.224]).reshape(1, 3, 1, 1)
@@ -164,7 +165,8 @@ def run_single_example(args, model):
 
   # Print results
   _, predicted_answer_idx = scores.data.cpu()[0].max(dim=0)
-  predicted_answer = vocab['answer_idx_to_token'][predicted_answer_idx[0]]
+  print(f'DEBUG: predicted_answer_idx={predicted_answer_idx}')
+  predicted_answer = vocab['answer_idx_to_token'][predicted_answer_idx.item()]
 
   print('Question: "%s"' % args.question)
   print('Predicted answer: ', predicted_answer)
@@ -175,7 +177,7 @@ def run_single_example(args, model):
     program = predicted_program.data.cpu()[0]
     num_inputs = 1
     for fn_idx in program:
-      fn_str = vocab['program_idx_to_token'][fn_idx]
+      fn_str = vocab['program_idx_to_token'][int(fn_idx)]
       num_inputs += iep.programs.get_num_inputs(fn_str) - 1
       print(fn_str)
       if num_inputs == 0:

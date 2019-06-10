@@ -139,7 +139,7 @@ def main(args):
       programs_encoded.append(program_encoded)
 
     if 'answer' in q:
-      answers.append(vocab['answer_token_to_idx'][q['answer']])
+      answers.append(vocab['answer_token_to_idx'][str(q['answer'])])
 
   # Pad encoded questions and programs
   max_question_length = max(len(x) for x in questions_encoded)

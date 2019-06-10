@@ -30,7 +30,7 @@ def is_chain(program_list):
 def list_to_tree(program_list):
   def build_subtree(cur):
     return {
-      'function': cur['function'],
+      'function': cur['type'],
       'value_inputs': [x for x in cur['value_inputs']],
       'inputs': [build_subtree(program_list[i]) for i in cur['inputs']],
     }
